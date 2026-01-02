@@ -1,0 +1,188 @@
+console.log("candidate.js loaded");
+
+// ---------- AUTH ----------
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "candidate") {
+  window.location.href = "/recruitment-platform/frontend/login.html";
+}
+
+// ---------- DOM ----------
+const jobsContainer = document.getElementById("available-jobs");
+const applicationsContainer = document.getElementById("applications");
+
+// ---------- LOAD AVAILABLE JOBS ----------
+function loadAvailableJobs() {
+  if (!jobsContainer) {
+    console.error("available-jobs container not found in HTML");
+    return;
+  }
+
+  jobsContainer.innerHTML = "<p class='empty-state'>Loading jobs...</p>";
+
+  Promise.all([
+    fetch("http://localhost/recruitment-platform/backend/jobs/list.php")
+      .then(res => res.json()),
+    fetch(
+      `http://localhost/recruitment-platform/backend/applications/candidate_list.php?candidate_id=${user.id}`
+    ).then(res => res.json())
+  ])
+    .then(([jobs, applications]) => {
+      if (!Array.isArray(jobs) || jobs.length === 0) {
+        jobsContainer.innerHTML = `
+          <div class="empty-state">
+            <h3>No jobs available</h3>
+            <p>Please check back later.</p>
+          </div>`;
+        return;
+      }
+
+      const appliedJobIds = applications.map(a => Number(a.job_id));
+
+      jobsContainer.innerHTML = jobs.map(job => {
+        const applied = appliedJobIds.includes(Number(job.id));
+
+        return `
+          <div class="card job-card">
+            <div>
+              <h3>${escapeHtml(job.title)}</h3>
+              <p>${escapeHtml(job.description || "")}</p>
+              <p><b>Skills:</b> ${escapeHtml(job.skills_required || "")}</p>
+              <p><b>Experience:</b> ${job.experience_required || 0}+ years</p>
+            </div>
+
+            <div>
+              ${
+                applied
+                  ? `<button class="btn-secondary" disabled>Already Applied</button>`
+                  : `<button class="btn-primary" onclick="applyToJob(${job.id})">Apply</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch(err => {
+      console.error("Error loading jobs:", err);
+      jobsContainer.innerHTML = "<p class='empty-state'>Failed to load jobs</p>";
+    });
+}
+
+// ---------- APPLY ----------
+function applyToJob(jobId) {
+  fetch("http://localhost/recruitment-platform/backend/applications/apply.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      job_id: jobId,
+      candidate_id: user.id
+    })
+  })
+    .then(res => res.json())
+    .then(() => {
+      loadAvailableJobs();
+      loadApplications();
+    });
+}
+
+// ---------- LOAD APPLICATIONS ----------
+function loadApplications() {
+  if (!applicationsContainer) return;
+
+  applicationsContainer.innerHTML =
+    "<p class='empty-state'>Loading applications...</p>";
+
+  fetch(
+    `http://localhost/recruitment-platform/backend/applications/candidate_list.php?candidate_id=${user.id}`
+  )
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        applicationsContainer.innerHTML = `
+          <div class="empty-state">
+            <h3>No applications yet</h3>
+            <p>Apply to a job to track progress.</p>
+          </div>`;
+        return;
+      }
+
+      applicationsContainer.innerHTML = data.map(app => `
+        <div class="card candidate-card">
+          <div class="candidate-left">
+            <h3>${escapeHtml(app.title || "Job Application")}</h3>
+            <span class="status ${app.status}">
+              ${app.status.toUpperCase()}
+            </span>
+
+            <div class="candidate-upload">
+              <input type="file"
+                accept="application/pdf"
+                onchange="uploadResume(${app.application_id}, this)">
+            </div>
+          </div>
+
+          <div class="candidate-right">
+            <div class="candidate-score">${app.score || 0}/100</div>
+            <small>ATS Score</small>
+          </div>
+        </div>
+      `).join("");
+    });
+}
+
+// ---------- UPLOAD RESUME ----------
+async function uploadResume(applicationId, input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("application_id", applicationId);
+  formData.append("resume", file);
+
+  await fetch(
+    "http://localhost/recruitment-platform/backend/applications/upload_resume.php",
+    { method: "POST", body: formData }
+  );
+
+  const text = await extractTextFromPDF(file);
+
+  await fetch(
+    "http://localhost/recruitment-platform/backend/applications/score_resume.php",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        application_id: applicationId,
+        resume_text: text
+      })
+    }
+  );
+
+  loadApplications();
+}
+
+// ---------- PDF TEXT ----------
+async function extractTextFromPDF(file) {
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(" ") + " ";
+  }
+  return text;
+}
+
+// ---------- UTILS ----------
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML;
+}
+
+// ---------- INIT ----------
+document.addEventListener("DOMContentLoaded", () => {
+  loadAvailableJobs();
+  loadApplications();
+});

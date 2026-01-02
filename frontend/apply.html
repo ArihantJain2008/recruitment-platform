@@ -1,0 +1,21 @@
+<button onclick="apply()">Apply to Job</button>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+function apply() {
+  fetch("http://localhost/recruitment-platform/backend/applications/apply.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      job_id: 1,               // demo job
+      candidate_id: user.id
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Applied");
+    window.location.href = "candidate.html";
+  });
+}
+</script>

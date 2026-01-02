@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recruitment Platform</title>
+
+  <!-- Reuse existing styles -->
+  <link rel="stylesheet" href="/recruitment-platform/frontend/css/style.css" />
+
+  <style>
+    /* Landing-page-only styles */
+    .hero {
+      max-width: 1100px;
+      margin: 100px auto 60px;
+      padding: 0 20px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: #64748b;
+      max-width: 700px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .cta-buttons a {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .cta-login {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .cta-register {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    .features {
+      max-width: 1100px;
+      margin: 60px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      text-align: left;
+    }
+
+    .feature-card h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <strong>Recruitment Platform</strong>
+    <div>
+      <a href="login.html">Login</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Smart Recruitment, Simplified</h1>
+    <p>
+      A modern recruitment platform where recruiters can manage jobs and candidates,
+      and applicants can track applications, upload resumes, and get ATS-based scores.
+    </p>
+
+    <div class="cta-buttons">
+      <a href="login.html" class="cta-login">Login</a>
+      <a href="register.html" class="cta-register">Register</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature-card">
+      <h3>For Recruiters</h3>
+      <p>
+        Create jobs, review applicants, shortlist candidates, schedule interviews,
+        and track recruitment metrics from a single dashboard.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <h3>For Candidates</h3>
+      <p>
+        Browse open positions, apply easily, upload resumes, and monitor application
+        status and ATS scores in real time.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <h3>ATS Resume Scoring</h3>
+      <p>
+        Automated resume analysis helps recruiters quickly identify relevant profiles
+        and helps candidates understand how well they match job requirements.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Recruitment Platform · Built as a full-stack project
+  </footer>
+
+</body>
+</html>

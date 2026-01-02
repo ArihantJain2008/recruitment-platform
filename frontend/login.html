@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Recruitment Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <div class="auth-background">
+    <div class="auth-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>Welcome Back</h1>
+      <p>Sign in to continue to your account</p>
+    </div>
+
+    <form class="auth-form" onsubmit="event.preventDefault(); login();">
+      <div class="form-group">
+        <input 
+          type="email" 
+          id="email" 
+          placeholder="Email address" 
+          required
+          autocomplete="email"
+        >
+      </div>
+
+      <div class="form-group">
+        <input 
+          type="password" 
+          id="password" 
+          placeholder="Password" 
+          required
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button type="submit" class="auth-button">
+        <span>Sign In</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="register.html">Create one now</a></p>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>
