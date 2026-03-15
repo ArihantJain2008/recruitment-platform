@@ -1,6 +1,0 @@
-{
-  "name": "recruitment/platform",
-  "require": {
-    "php": "^8.1"
-  }
-}

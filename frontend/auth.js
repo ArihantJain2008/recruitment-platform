@@ -9,12 +9,34 @@ function register() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password, role })
   })
-    .then(res => res.json())
+    .then(res => {
+      return res.text().then(text => {
+        try {
+          const data = JSON.parse(text);
+          if (!res.ok) {
+            throw new Error(data.error || `HTTP error! status: ${res.status}`);
+          }
+          return data;
+        } catch (e) {
+          if (e.message && e.message.includes("HTTP error")) {
+            throw e;
+          }
+          console.error("Invalid JSON response:", text);
+          throw new Error("Server returned invalid JSON: " + text.substring(0, 100));
+        }
+      });
+    })
     .then(data => {
-      alert(data.message || data.error);
-      if (!data.error) {
+      if (data.error) {
+        alert("Error: " + data.error);
+      } else {
+        alert(data.message || "Registration successful!");
         window.location.href = "/recruitment-platform/frontend/login.html";
       }
+    })
+    .catch(error => {
+      console.error("Registration error:", error);
+      alert("Registration failed. Please check database connection.");
     });
 }
 
@@ -27,9 +49,27 @@ function login() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password })
   })
-    .then(res => res.json())
+    .then(res => {
+      return res.text().then(text => {
+        try {
+          const data = JSON.parse(text);
+          if (!res.ok) {
+            throw new Error(data.error || `HTTP error! status: ${res.status}`);
+          }
+          return data;
+        } catch (e) {
+          if (e.message && e.message.includes("HTTP error")) {
+            throw e;
+          }
+          console.error("Invalid JSON response:", text);
+          throw new Error("Server returned invalid JSON: " + text.substring(0, 100));
+        }
+      });
+    })
     .then(data => {
-      if (!data.error) {
+      if (data.error) {
+        alert("Error: " + data.error);
+      } else {
         localStorage.setItem("user", JSON.stringify(data));
 
         if (data.role === "recruiter") {
@@ -37,9 +77,11 @@ function login() {
         } else if (data.role === "candidate") {
           window.location.href = "/recruitment-platform/frontend/candidate.html";
         }
-      } else {
-        alert(data.error);
       }
+    })
+    .catch(error => {
+      console.error("Login error:", error);
+      alert("Login failed. Please check database connection.");
     });
 }
 

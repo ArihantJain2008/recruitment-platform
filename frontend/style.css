@@ -13,6 +13,10 @@ body {
   min-height: 100vh;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 body:not(.auth-page) {
   position: relative;
 }
@@ -424,7 +428,7 @@ input[type="file"]:hover {
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: 20000;
   left: 0;
   top: 0;
   width: 100%;
@@ -481,6 +485,9 @@ input[type="file"]:hover {
 }
 
 .modal-content input[type="text"],
+.modal-content input[type="number"],
+.modal-content input[type="url"],
+.modal-content input[type="datetime-local"],
 .modal-content textarea {
   width: 100%;
   padding: 12px;
@@ -493,6 +500,9 @@ input[type="file"]:hover {
 }
 
 .modal-content input[type="text"]:focus,
+.modal-content input[type="number"]:focus,
+.modal-content input[type="url"]:focus,
+.modal-content input[type="datetime-local"]:focus,
 .modal-content textarea:focus {
   outline: none;
   border-color: #667eea;

@@ -18,7 +18,22 @@ $job_id = intval($data['id']);
 $title = isset($data['title']) ? trim($data['title']) : '';
 $description = isset($data['description']) ? trim($data['description']) : '';
 $skills = isset($data['skills_required']) ? trim($data['skills_required']) : '';
-$experience = isset($data['experience_required']) ? trim($data['experience_required']) : '';
+
+$experience = null;
+if (isset($data['experience_required']) && $data['experience_required'] !== null && $data['experience_required'] !== '') {
+    $rawExperience = (string)$data['experience_required'];
+    if (is_numeric($rawExperience)) {
+        $experience = (string)max(0, intval($rawExperience));
+    } elseif (preg_match('/\d+/', $rawExperience, $matches)) {
+        $experience = (string)intval($matches[0]);
+    }
+}
+
+if ($job_id <= 0 || $title === '') {
+    http_response_code(400);
+    echo json_encode(["error" => "Job ID and title are required"]);
+    exit;
+}
 
 // Check if job exists
 $checkStmt = $conn->prepare("SELECT id FROM jobs WHERE id = ?");

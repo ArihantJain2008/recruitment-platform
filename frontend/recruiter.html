@@ -1,99 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recruiter Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recruiter Dashboard</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <strong>📊 Recruiter Dashboard</strong>
-        <a href="login.html">Logout</a>
-    </header>
-    
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <p class="stat-label">Total Jobs</p>
-                <h2 id="stat-jobs">0</h2>
-            </div>
+  <header>
+    <strong>Recruiter Dashboard</strong>
+    <a href="login.html">Logout</a>
+  </header>
 
-            <div class="stat-card">
-                <p class="stat-label">Total Applicants</p>
-                <h2 id="stat-applicants">0</h2>
-            </div>
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-label">Total Jobs</p>
+        <h2 id="stat-jobs">0</h2>
+      </div>
 
-            <div class="stat-card shortlisted">
-                <p class="stat-label">Shortlisted</p>
-                <h2 id="stat-shortlisted">0</h2>
-            </div>
+      <div class="stat-card">
+        <p class="stat-label">Total Applicants</p>
+        <h2 id="stat-applicants">0</h2>
+      </div>
 
-            <div class="stat-card rejected">
-                <p class="stat-label">Rejected</p>
-                <h2 id="stat-rejected">0</h2>
-            </div>
+      <div class="stat-card shortlisted">
+        <p class="stat-label">Shortlisted</p>
+        <h2 id="stat-shortlisted">0</h2>
+      </div>
 
-            <div class="stat-card interviewed">
-                <p class="stat-label">Interviewed</p>
-                <h2 id="stat-interviewed">0</h2>
-            </div>
-        </div>
+      <div class="stat-card rejected">
+        <p class="stat-label">Rejected</p>
+        <h2 id="stat-rejected">0</h2>
+      </div>
+
+      <div class="stat-card interviewed">
+        <p class="stat-label">Interviewed</p>
+        <h2 id="stat-interviewed">0</h2>
+      </div>
     </div>
+  </div>
 
-    <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <h1>Jobs</h1>
-            <button class="btn-primary" onclick="showJobForm()" style="margin: 0;">
-                ➕ Create New Job
-            </button>
-        </div>
-        
-        <div id="jobs-list"></div>
-        
-        <div id="job-form-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h2 id="job-form-title">Create New Job</h2>
-                    <button onclick="closeJobForm()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
-                </div>
-                <form id="job-form" onsubmit="event.preventDefault(); saveJob();">
-                    <input type="hidden" id="job-id" value="">
-                    <div class="form-group">
-                        <label>Job Title *</label>
-                        <input type="text" id="job-title" required placeholder="e.g., Frontend Developer">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="job-description" rows="4" placeholder="Job description..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Skills Required</label>
-                        <input type="text" id="job-skills" placeholder="e.g., HTML, CSS, JavaScript, React">
-                    </div>
-                    <div class="form-group">
-                        <label>Experience Required</label>
-                        <input type="text" id="job-experience" placeholder="e.g., 2+ years">
-                    </div>
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button type="button" onclick="closeJobForm()" style="background: #64748b;">Cancel</button>
-                        <button type="submit" class="btn-primary">Save Job</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h1>Jobs</h1>
+      <button class="btn-primary" onclick="showJobForm()" style="margin: 0;">
+        + Create New Job
+      </button>
     </div>
+    <div id="jobs-list"></div>
+  </div>
 
-    <div class="container">
-        <h1>Applicants</h1>
-        <div style="margin-bottom: 20px;">
-            <select id="job-select" onchange="loadApplicants()" style="padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px; min-width: 200px;">
-                <option value="">Select a job...</option>
-            </select>
-        </div>
-        <div id="applicants"></div>
+  <div class="container">
+    <h1>Applicants</h1>
+    <div style="margin-bottom: 20px;">
+      <select id="job-select" onchange="loadApplicants()" style="padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px; min-width: 200px;">
+        <option value="">Select a job...</option>
+      </select>
     </div>
-    
-    <script src="/recruitment-platform/frontend/recruiter.js"></script>
+    <div id="applicants"></div>
+  </div>
+
+  <div id="job-form-modal" class="modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 id="job-form-title">Create New Job</h2>
+        <button onclick="closeJobForm()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+      </div>
+      <form id="job-form" autocomplete="off" onsubmit="event.preventDefault(); saveJob();">
+        <input type="hidden" id="job-id" value="">
+        <div class="form-group">
+          <label>Job Title *</label>
+          <input type="text" id="job-title" required placeholder="e.g., Frontend Developer">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="job-description" rows="4" placeholder="Job description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Skills Required</label>
+          <input type="text" id="job-skills" placeholder="e.g., HTML, CSS, JavaScript, React">
+        </div>
+        <div class="form-group">
+          <label>Experience Required (Years)</label>
+          <input type="number" id="job-experience" min="0" step="1" inputmode="numeric" placeholder="e.g., 2">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeJobForm()" style="background: #64748b;">Cancel</button>
+          <button type="submit" class="btn-primary">Save Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="interview-modal" class="modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2>Schedule Interview</h2>
+        <button onclick="closeInterviewModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+      </div>
+      <form id="interview-form" autocomplete="off" onsubmit="event.preventDefault(); confirmInterviewSchedule();">
+        <input type="hidden" id="interview-application-id" value="">
+        <div class="form-group">
+          <label>Candidate</label>
+          <input type="text" id="interview-candidate-name" readonly>
+        </div>
+        <div class="form-group">
+          <label>Interview Date & Time *</label>
+          <input type="datetime-local" id="interview-time" required>
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="interview-duration" min="15" max="240" step="5" value="30">
+        </div>
+        <div class="form-group">
+          <label>Google Meet Link (optional)</label>
+          <input type="url" id="interview-meet-link" placeholder="Leave blank to auto-generate">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeInterviewModal()" style="background: #64748b;">Cancel</button>
+          <button type="submit" class="btn-secondary">Send Interview Invite</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/recruitment-platform/frontend/recruiter.js"></script>
 </body>
-</html> 
+</html>

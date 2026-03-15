@@ -1,13 +1,11 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(0);
 
-$host = $_ENV["MYSQLHOST"] ?? "localhost";
-$user = $_ENV["MYSQLUSER"] ?? "root";
-$pass = $_ENV["MYSQLPASSWORD"] ?? "";
-$db   = $_ENV["MYSQLDATABASE"] ?? "recruitment_db";
-$port = $_ENV["MYSQLPORT"] ?? 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
+$conn = new mysqli("localhost", "root", "", "recrutiment_db"); //the database name is recrutiment_db in sql so dont change it again !!!!!
 
 if ($conn->connect_error) {
-    die("DB Connection failed: " . $conn->connect_error);
+    http_response_code(500);
+    echo json_encode(["error" => "Database connection failed: " . $conn->connect_error]);
+    exit;
 }

@@ -1,6 +1,13 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 include("../config/db.php");
 
@@ -17,6 +24,11 @@ $candidate_id = intval($data["candidate_id"]);
 
 // Check if already applied
 $checkStmt = $conn->prepare("SELECT id FROM applications WHERE job_id = ? AND candidate_id = ?");
+if (!$checkStmt) {
+    http_response_code(500);
+    echo json_encode(["error" => "Database error: " . $conn->error]);
+    exit;
+}
 $checkStmt->bind_param("ii", $job_id, $candidate_id);
 $checkStmt->execute();
 $checkResult = $checkStmt->get_result();
@@ -31,6 +43,11 @@ $stmt = $conn->prepare(
   "INSERT INTO applications (job_id, candidate_id, status)
    VALUES (?, ?, 'applied')"
 );
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(["error" => "Database error: " . $conn->error]);
+    exit;
+}
 
 $stmt->bind_param("ii", $job_id, $candidate_id);
 
