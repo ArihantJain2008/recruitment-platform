@@ -8,7 +8,7 @@
 
 /* ========== BODY ========== */
 body {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #f8fafc;
   color: #1f2937;
   min-height: 100vh;
 }
@@ -28,16 +28,14 @@ body:not(.auth-page)::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.05) 0%, transparent 50%);
+  background: none;
   pointer-events: none;
   z-index: 0;
 }
 
 /* ========== HEADER ========== */
 header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: #fff;
   padding: 20px 40px;
   display: flex;
@@ -102,7 +100,7 @@ header button:hover {
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   border-radius: 20px;
   padding: 28px 24px;
   text-align: center;
@@ -120,7 +118,7 @@ header button:hover {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background-color: #000;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -148,31 +146,19 @@ header button:hover {
   font-size: 42px;
   font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #667eea;
 }
 
 .stat-card.shortlisted h2 {
-  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #16a34a;
 }
 
 .stat-card.rejected h2 {
-  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #dc2626;
 }
 
 .stat-card.interviewed h2 {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #7c3aed;
 }
 
 /* ========== CARDS (APPLICANTS / APPLICATIONS) ========== */
@@ -220,22 +206,22 @@ header button:hover {
 }
 
 .status.applied {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: #dbeafe;
   color: #1e40af;
 }
 
 .status.shortlisted {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  background: #dcfce7;
   color: #14532d;
 }
 
 .status.rejected {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: #fee2e2;
   color: #991b1b;
 }
 
 .status.interviewed {
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  background: #ede9fe;
   color: #5b21b6;
 }
 
@@ -264,7 +250,7 @@ button,
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: #2563eb;
   color: #fff;
 }
 
@@ -274,7 +260,7 @@ button,
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: #fff;
 }
 
@@ -284,7 +270,7 @@ button,
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  background: #dc2626;
   color: #fff;
 }
 
@@ -313,7 +299,7 @@ input[type="file"]:hover {
 
 /* ========== CANDIDATE PAGE ========== */
 .candidate-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: #fff;
   padding: 60px 40px;
   text-align: center;
@@ -323,14 +309,7 @@ input[type="file"]:hover {
 }
 
 .candidate-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
+  content: none;
 }
 
 .candidate-hero h1 {
@@ -363,7 +342,7 @@ input[type="file"]:hover {
 .candidate-right {
   text-align: center;
   padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #f8fafc;
   border-radius: 16px;
   min-width: 120px;
 }
@@ -371,10 +350,7 @@ input[type="file"]:hover {
 .candidate-score {
   font-size: 36px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #667eea;
   margin-bottom: 4px;
 }
 
@@ -523,7 +499,7 @@ input[type="file"]:hover {
 
 /* ========== AUTH (LOGIN / REGISTER) ========== */
 .auth-page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -533,13 +509,7 @@ input[type="file"]:hover {
 }
 
 .auth-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  z-index: 0;
+  display: none;
 }
 
 .auth-shapes {
@@ -558,7 +528,7 @@ input[type="file"]:hover {
 .shape-1 {
   width: 300px;
   height: 300px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #667eea;
   top: -100px;
   left: -100px;
   animation-delay: 0s;
@@ -567,7 +537,7 @@ input[type="file"]:hover {
 .shape-2 {
   width: 200px;
   height: 200px;
-  background: linear-gradient(135deg, #f093fb, #f5576c);
+  background: #f093fb;
   bottom: -50px;
   right: -50px;
   animation-delay: 5s;
@@ -576,7 +546,7 @@ input[type="file"]:hover {
 .shape-3 {
   width: 150px;
   height: 150px;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  background: #4facfe;
   top: 50%;
   right: 10%;
   animation-delay: 10s;
@@ -628,10 +598,7 @@ input[type="file"]:hover {
 .auth-header h1 {
   font-size: 32px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #667eea;
   margin-bottom: 8px;
   letter-spacing: -0.5px;
 }
@@ -703,7 +670,7 @@ input[type="file"]:hover {
 
 .role-option input[type="radio"]:checked + .role-label {
   border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  background: rgba(102, 126, 234, 0.1);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
@@ -740,7 +707,7 @@ input[type="file"]:hover {
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -757,7 +724,7 @@ input[type="file"]:hover {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: rgba(255, 255, 255, 0.2);
   transition: left 0.5s;
 }
 
