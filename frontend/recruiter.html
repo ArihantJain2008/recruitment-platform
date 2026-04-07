@@ -9,7 +9,18 @@
 <body>
   <header>
     <strong>Recruiter Dashboard</strong>
-    <a href="login.html">Logout</a>
+    <div class="header-actions">
+      <button
+        id="theme-toggle-recruiter"
+        type="button"
+        class="theme-toggle"
+        aria-label="Toggle dark mode"
+        aria-pressed="false"
+      >
+        🌙
+      </button>
+      <a href="login.html" onclick="localStorage.removeItem('user');">Logout</a>
+    </div>
   </header>
 
   <div class="container">
@@ -39,6 +50,25 @@
         <h2 id="stat-interviewed">0</h2>
       </div>
     </div>
+
+    <h1 style="margin-bottom: 16px;">Smart Insights</h1>
+    <div class="stats-grid insights-grid">
+      <div class="stat-card">
+        <p class="stat-label">Average Candidate Score</p>
+        <div id="insight-average-score" class="insight-value">0%</div>
+      </div>
+
+      <div class="stat-card">
+        <p class="stat-label">Most Common Skill</p>
+        <div id="insight-common-skill" class="insight-value">No skill data</div>
+      </div>
+
+      <div class="stat-card">
+        <p class="stat-label">Top Performing Candidate</p>
+        <div id="insight-top-candidate" class="insight-value">No candidate data</div>
+        <small id="insight-meta" class="insight-meta">Top candidate score: N/A</small>
+      </div>
+    </div>
   </div>
 
   <div class="container">
@@ -57,6 +87,17 @@
       <select id="job-select" onchange="loadApplicants()" style="padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px; min-width: 200px;">
         <option value="">Select a job...</option>
       </select>
+    </div>
+    <div class="ranking-controls">
+      <label for="ranking-job-description">Job description for ranking (optional override)</label>
+      <textarea
+        id="ranking-job-description"
+        rows="3"
+        placeholder="Leave blank to use saved job description and skills."
+      ></textarea>
+      <button class="btn-secondary" onclick="runCandidateRanking()" style="margin-top: 0;">
+        Recalculate Ranking
+      </button>
     </div>
     <div id="applicants"></div>
   </div>
@@ -125,6 +166,7 @@
     </div>
   </div>
 
+  <script src="/recruitment-platform/frontend/theme.js"></script>
   <script src="/recruitment-platform/frontend/recruiter.js"></script>
 </body>
 </html>

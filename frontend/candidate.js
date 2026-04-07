@@ -18,6 +18,8 @@ if (!user || user.role !== "candidate") {
 const jobsContainer = document.getElementById("available-jobs");
 const notificationsContainer = document.getElementById("notifications");
 const applicationsContainer = document.getElementById("applications");
+const notificationToggleButton = document.getElementById("notification-toggle");
+const notificationWidget = document.getElementById("notification-widget");
 
 // ---------- LOAD AVAILABLE JOBS ----------
 function loadAvailableJobs() {
@@ -173,6 +175,8 @@ function loadApplications() {
             <span class="status ${app.status}">
               ${app.status.toUpperCase()}
             </span>
+            ${renderMatchFeedback(app)}
+            ${renderAiSummary(app)}
             ${renderInterviewNotification(app)}
 
             <div class="candidate-upload">
@@ -202,7 +206,7 @@ function loadApplications() {
           </div>
 
           <div class="candidate-right">
-            <div class="candidate-score">${app.score || 0}/100</div>
+            <div class="candidate-score">${toScore(app.score)}%</div>
             <small>ATS Score</small>
           </div>
         </div>
@@ -268,6 +272,39 @@ function loadNotifications() {
       notificationsContainer.innerHTML =
         "<p class='empty-state'>Failed to load notifications.</p>";
     });
+}
+
+function setNotificationPanelOpen(isOpen) {
+  if (!notificationToggleButton || !notificationWidget) return;
+
+  notificationWidget.classList.toggle("open", isOpen);
+  notificationToggleButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+function setupNotificationPanel() {
+  if (!notificationToggleButton || !notificationWidget) return;
+
+  setNotificationPanelOpen(false);
+
+  notificationToggleButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = notificationWidget.classList.contains("open");
+    setNotificationPanelOpen(!isOpen);
+  });
+
+  notificationWidget.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  document.addEventListener("click", () => {
+    setNotificationPanelOpen(false);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      setNotificationPanelOpen(false);
+    }
+  });
 }
 
 function submitApplicationText(applicationId) {
@@ -385,6 +422,63 @@ function formatInterviewDateTime(value) {
   return date.toLocaleString();
 }
 
+function toScore(value) {
+  const parsed = Number.parseFloat(value);
+  if (Number.isNaN(parsed) || !Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  const bounded = Math.max(0, Math.min(100, Math.round(parsed)));
+  return bounded;
+}
+
+function normalizeFeedbackLabel(value, score) {
+  const text = String(value || "").toLowerCase();
+  if (text.includes("strong")) {
+    return "Strong";
+  }
+  if (text.includes("moderate")) {
+    return "Moderate";
+  }
+  if (text.includes("low") || text.includes("weak")) {
+    return "Weak";
+  }
+
+  if (score >= 75) {
+    return "Strong";
+  }
+  if (score >= 45) {
+    return "Moderate";
+  }
+  return "Weak";
+}
+
+function feedbackClassName(label) {
+  if (label === "Strong") {
+    return "feedback-value-strong";
+  }
+  if (label === "Moderate") {
+    return "feedback-value-moderate";
+  }
+  return "feedback-value-weak";
+}
+
+function renderMatchFeedback(app) {
+  const score = toScore(app.score);
+  const feedbackLabel = normalizeFeedbackLabel(app.match_feedback, score);
+  const feedbackClass = feedbackClassName(feedbackLabel);
+  const missingSkillsRaw = String(app.missing_skills || "").trim();
+  const missingSkills = missingSkillsRaw !== "" ? missingSkillsRaw : "None";
+
+  return `
+    <div class="feedback-panel">
+      <p><strong>Match Score:</strong> ${score}%</p>
+      <p><strong>Missing Skills:</strong> ${escapeHtml(missingSkills)}</p>
+      <p><strong>Feedback:</strong> <span class="${feedbackClass}">${escapeHtml(feedbackLabel)}</span></p>
+    </div>
+  `;
+}
+
 function renderInterviewNotification(app) {
   if (app.status !== "interviewed" || (!app.interview_time && !app.interview_note && !app.interview_meet_link)) {
     return "";
@@ -399,10 +493,10 @@ function renderInterviewNotification(app) {
     : `Interview scheduled for ${escapeHtml(timeText)}${timezoneText}.`;
 
   return `
-    <div style="margin: 12px 0; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc;">
-      <p style="margin-bottom: 6px;"><strong>Interview Notification</strong></p>
-      <p style="margin-bottom: 6px;">${noteText}</p>
-      ${app.interview_time ? `<p style="margin-bottom: 6px;"><strong>Time:</strong> ${escapeHtml(timeText)}${timezoneText}</p>` : ""}
+    <div class="simple-panel">
+      <p><strong>Interview Notification</strong></p>
+      <p>${noteText}</p>
+      ${app.interview_time ? `<p><strong>Time:</strong> ${escapeHtml(timeText)}${timezoneText}</p>` : ""}
       <div style="display:flex; gap:8px; flex-wrap: wrap;">
         ${meetLink ? `<a class="btn-secondary" style="text-decoration:none; display:inline-block; margin-top:0;" href="${escapeHtml(meetLink)}" target="_blank" rel="noopener noreferrer">Join Meet</a>` : ""}
         ${calendarLink ? `<a class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:0;" href="${escapeHtml(calendarLink)}" target="_blank" rel="noopener noreferrer">Calendar Invite</a>` : ""}
@@ -411,8 +505,42 @@ function renderInterviewNotification(app) {
   `;
 }
 
+function renderAiSummary(app) {
+  const aiUsed = Number(app.ai_used) === 1;
+  const aiFeedback = (app.ai_feedback || "").trim();
+  const modelText = app.ai_model ? `<p><small>Model: ${escapeHtml(app.ai_model)}</small></p>` : "";
+
+  if (aiUsed && aiFeedback) {
+    return `
+      <div class="simple-panel">
+        <p><strong>AI Evaluation</strong></p>
+        <p>${escapeHtml(aiFeedback)}</p>
+        ${modelText}
+      </div>
+    `;
+  }
+
+  if (aiUsed) {
+    return `
+      <div class="simple-panel">
+        <p><strong>AI Evaluation</strong></p>
+        <p>AI scoring is completed for this application.</p>
+        ${modelText}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="simple-panel">
+      <p><strong>AI Evaluation</strong></p>
+      <p>Not generated yet. Submit your skills text or upload a resume PDF to trigger it.</p>
+    </div>
+  `;
+}
+
 // ---------- INIT ----------
 document.addEventListener("DOMContentLoaded", () => {
+  setupNotificationPanel();
   loadAvailableJobs();
   loadNotifications();
   loadApplications();

@@ -10,6 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 include("../config/db.php");
+require_once __DIR__ . "/../config/ai.php";
+require_once __DIR__ . "/ranking_engine.php";
 
 $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
@@ -20,7 +22,8 @@ if (!$data || !isset($data["application_id"]) || !isset($data["resume_text"])) {
 }
 
 $applicationId = intval($data["application_id"]);
-$resumeText = strtolower(trim((string)$data["resume_text"]));
+$resumeTextRaw = trim((string)$data["resume_text"]);
+$resumeText = strtolower($resumeTextRaw);
 
 if ($applicationId <= 0 || $resumeText === "") {
     echo json_encode(["error" => "Application id and resume text are required"]);
@@ -81,68 +84,133 @@ $requiredSkillsText = strtolower(trim((string)($jobData["required_skills"] ?? ""
 $requiredExperience = $jobData["required_experience"];
 
 $requiredSkills = parseSkills($requiredSkillsText);
+$aiResult = aiEvaluateCandidateText($requiredSkills, $requiredExperience, $resumeText);
+$aiDebug = aiGetLastError();
+
 $matchedSkills = [];
-
-foreach ($requiredSkills as $skill) {
-    if (textContainsSkill($resumeText, $skill)) {
-        $matchedSkills[] = $skill;
-    }
-}
-
 $score = 0;
-$requiredCount = count($requiredSkills);
-$matchedCount = count($matchedSkills);
+$aiUsed = 0;
+$aiModel = null;
+$aiFeedback = null;
 
-if ($requiredCount > 0) {
-    $score += (int)round(($matchedCount / $requiredCount) * 85);
+if (is_array($aiResult) && isset($aiResult["score"])) {
+    $aiUsed = 1;
+    $aiModel = (string)($aiResult["model"] ?? "");
+    $score = max(0, min(100, intval($aiResult["score"])));
+
+    $aiMatched = aiNormalizeSkills($aiResult["matched_skills"] ?? []);
+    if (!empty($requiredSkills)) {
+        $requiredLookup = array_flip($requiredSkills);
+        foreach ($aiMatched as $skill) {
+            if (isset($requiredLookup[$skill])) {
+                $matchedSkills[] = $skill;
+            }
+        }
+    } else {
+        $matchedSkills = $aiMatched;
+    }
+
+    $summary = trim((string)($aiResult["summary"] ?? ""));
+    $missing = aiNormalizeSkills($aiResult["missing_skills"] ?? []);
+    if (!empty($missing)) {
+        $summary .= ($summary !== "" ? " " : "") . "Missing skills: " . implode(", ", $missing) . ".";
+    }
+    $aiFeedback = $summary !== "" ? $summary : null;
 } else {
-    $genericKeywords = ["html", "css", "javascript", "react", "sql", "python"];
-    $hits = 0;
-
-    foreach ($genericKeywords as $word) {
-        if (textContainsSkill($resumeText, $word)) {
-            $hits++;
+    foreach ($requiredSkills as $skill) {
+        if (textContainsSkill($resumeText, $skill)) {
+            $matchedSkills[] = $skill;
         }
     }
 
-    $score += min($hits * 12, 70);
-}
+    $requiredCount = count($requiredSkills);
+    $matchedCount = count($matchedSkills);
 
-$textLength = strlen($resumeText);
-if ($textLength >= 80) {
-    $score += 10;
-} elseif ($textLength >= 30) {
-    $score += 5;
-}
+    if ($requiredCount > 0) {
+        $score += (int)round(($matchedCount / $requiredCount) * 85);
+    } else {
+        $genericKeywords = ["html", "css", "javascript", "react", "sql", "python"];
+        $hits = 0;
 
-$requiredYears = is_numeric($requiredExperience) ? intval($requiredExperience) : 0;
-$candidateYears = extractYearsFromText($resumeText);
+        foreach ($genericKeywords as $word) {
+            if (textContainsSkill($resumeText, $word)) {
+                $hits++;
+            }
+        }
 
-if ($requiredYears > 0) {
-    if ($candidateYears >= $requiredYears) {
-        $score += 5;
-    } elseif ($candidateYears > 0 && ($requiredYears - $candidateYears) <= 1) {
-        $score += 3;
+        $score += min($hits * 12, 70);
     }
-} elseif ($candidateYears > 0) {
-    $score += 5;
+
+    $textLength = strlen($resumeText);
+    if ($textLength >= 80) {
+        $score += 10;
+    } elseif ($textLength >= 30) {
+        $score += 5;
+    }
+
+    $requiredYears = is_numeric($requiredExperience) ? intval($requiredExperience) : 0;
+    $candidateYears = extractYearsFromText($resumeText);
+
+    if ($requiredYears > 0) {
+        if ($candidateYears >= $requiredYears) {
+            $score += 5;
+        } elseif ($candidateYears > 0 && ($requiredYears - $candidateYears) <= 1) {
+            $score += 3;
+        }
+    } elseif ($candidateYears > 0) {
+        $score += 5;
+    }
+
+    if ($score > 100) {
+        $score = 100;
+    }
+
+    if ($score < 0) {
+        $score = 0;
+    }
 }
 
-if ($score > 100) {
-    $score = 100;
+$requiredCount = count($requiredSkills);
+$matchedCount = count($matchedSkills);
+
+$hasAiColumns = ensureAiColumns($conn);
+$hasResumeSummaryColumn = ensureApplicationsResumeSummaryColumn($conn);
+$resumeSummary = buildResumeSummary($resumeTextRaw, $aiResult, $aiFeedback);
+
+if ($hasAiColumns && $hasResumeSummaryColumn) {
+    $stmt = $conn->prepare("UPDATE applications SET score = ?, ai_feedback = ?, ai_model = ?, ai_used = ?, resume_summary = ? WHERE id = ?");
+    if (!$stmt) {
+        echo json_encode(["error" => "Failed to prepare score update"]);
+        exit;
+    }
+
+    $stmt->bind_param("issisi", $score, $aiFeedback, $aiModel, $aiUsed, $resumeSummary, $applicationId);
+} elseif ($hasAiColumns) {
+    $stmt = $conn->prepare("UPDATE applications SET score = ?, ai_feedback = ?, ai_model = ?, ai_used = ? WHERE id = ?");
+    if (!$stmt) {
+        echo json_encode(["error" => "Failed to prepare score update"]);
+        exit;
+    }
+
+    $stmt->bind_param("issii", $score, $aiFeedback, $aiModel, $aiUsed, $applicationId);
+} elseif ($hasResumeSummaryColumn) {
+    $stmt = $conn->prepare("UPDATE applications SET score = ?, resume_summary = ? WHERE id = ?");
+    if (!$stmt) {
+        echo json_encode(["error" => "Failed to prepare score update"]);
+        exit;
+    }
+
+    $stmt->bind_param("isi", $score, $resumeSummary, $applicationId);
+} else {
+    $stmt = $conn->prepare("UPDATE applications SET score = ? WHERE id = ?");
+    if (!$stmt) {
+        echo json_encode(["error" => "Failed to prepare score update"]);
+        exit;
+    }
+
+    $stmt->bind_param("ii", $score, $applicationId);
 }
 
-if ($score < 0) {
-    $score = 0;
-}
-
-$stmt = $conn->prepare("UPDATE applications SET score = ? WHERE id = ?");
-if (!$stmt) {
-    echo json_encode(["error" => "Failed to prepare score update"]);
-    exit;
-}
-
-$stmt->bind_param("ii", $score, $applicationId);
 if (!$stmt->execute()) {
     echo json_encode(["error" => "Failed to update score"]);
     exit;
@@ -154,7 +222,13 @@ echo json_encode([
     "score" => $score,
     "required_skills" => $requiredSkills,
     "matched_skills" => $matchedSkills,
-    "match_percent" => $requiredCount > 0 ? (int)round(($matchedCount / $requiredCount) * 100) : null
+    "match_percent" => $requiredCount > 0 ? (int)round(($matchedCount / $requiredCount) * 100) : null,
+    "ai_used" => $aiUsed === 1,
+    "ai_feedback" => $aiFeedback,
+    "ai_model" => $aiModel,
+    "resume_summary" => $resumeSummary,
+    "ai_provider" => aiGetEnv("AI_PROVIDER", ""),
+    "ai_debug" => $aiUsed === 1 ? null : $aiDebug
 ]);
 
 function parseSkills($skillsText) {
@@ -212,4 +286,57 @@ function extractYearsFromText($resumeText) {
     }
 
     return 0;
+}
+
+function ensureAiColumns($conn) {
+    $result = $conn->query("SHOW COLUMNS FROM applications");
+    if (!$result) {
+        return false;
+    }
+
+    $columns = [];
+    while ($row = $result->fetch_assoc()) {
+        $columns[$row["Field"]] = true;
+    }
+
+    $changes = [];
+    if (!isset($columns["ai_feedback"])) {
+        $changes[] = "ADD COLUMN ai_feedback TEXT NULL";
+    }
+    if (!isset($columns["ai_model"])) {
+        $changes[] = "ADD COLUMN ai_model VARCHAR(100) NULL";
+    }
+    if (!isset($columns["ai_used"])) {
+        $changes[] = "ADD COLUMN ai_used TINYINT(1) NOT NULL DEFAULT 0";
+    }
+
+    if (empty($changes)) {
+        return true;
+    }
+
+    $sql = "ALTER TABLE applications " . implode(", ", $changes);
+    return (bool)$conn->query($sql);
+}
+
+function buildResumeSummary($resumeTextRaw, $aiResult, $aiFeedback) {
+    $modelSummary = is_array($aiResult) ? trim((string)($aiResult["summary"] ?? "")) : "";
+    if ($modelSummary !== "") {
+        return $modelSummary;
+    }
+
+    $feedbackSummary = trim((string)$aiFeedback);
+    if ($feedbackSummary !== "") {
+        return $feedbackSummary;
+    }
+
+    $cleanText = preg_replace('/\s+/', ' ', trim((string)$resumeTextRaw));
+    if ($cleanText === "") {
+        return "";
+    }
+
+    if (strlen($cleanText) > 900) {
+        return trim(substr($cleanText, 0, 900)) . "...";
+    }
+
+    return $cleanText;
 }

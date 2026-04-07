@@ -36,3 +36,21 @@ CREATE TABLE IF NOT EXISTS applications (
     FOREIGN KEY (candidate_id) REFERENCES users(id),
     UNIQUE KEY unique_application (job_id, candidate_id)
 );
+
+-- Ranking engine schema updates
+ALTER TABLE applications
+    ADD COLUMN IF NOT EXISTS resume_summary TEXT NULL;
+
+CREATE TABLE IF NOT EXISTS candidate_scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    candidate_id INT NOT NULL,
+    job_id INT NOT NULL,
+    score DECIMAL(5,2) NOT NULL DEFAULT 0,
+    `rank` INT NOT NULL DEFAULT 0,
+    matched_keywords TEXT NULL,
+    feedback VARCHAR(30) NOT NULL DEFAULT 'Low match',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_candidate_scores_job (job_id),
+    KEY idx_candidate_scores_rank (job_id, `rank`)
+);

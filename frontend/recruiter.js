@@ -41,6 +41,64 @@ function parseExperience(rawValue) {
   return value;
 }
 
+function getRankingDescriptionInput() {
+  const input = document.getElementById("ranking-job-description");
+  if (!input) {
+    return "";
+  }
+
+  return (input.value || "").trim();
+}
+
+function toScoreNumber(value) {
+  const parsed = Number.parseFloat(value);
+  if (Number.isNaN(parsed) || !Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(parsed)));
+}
+
+function feedbackFromScore(scoreValue) {
+  const score = toScoreNumber(scoreValue);
+  if (score >= 75) {
+    return "Strong match";
+  }
+  if (score >= 45) {
+    return "Moderate match";
+  }
+  return "Low match";
+}
+
+function feedbackClass(feedback) {
+  const value = String(feedback || "").toLowerCase();
+  if (value.includes("strong")) {
+    return "feedback-strong";
+  }
+  if (value.includes("moderate")) {
+    return "feedback-moderate";
+  }
+  return "feedback-low";
+}
+
+function getRankBadgeClass(rank) {
+  if (rank === 1) {
+    return "rank-gold";
+  }
+  if (rank === 2) {
+    return "rank-silver";
+  }
+  if (rank === 3) {
+    return "rank-bronze";
+  }
+  return "";
+}
+
+function normalizeInsightText(value, fallbackText = "N/A") {
+  const text = String(value ?? "").trim();
+  return text === "" ? fallbackText : text;
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   const text = await response.text();
@@ -74,12 +132,14 @@ async function loadJobs() {
     displayJobs(jobs);
     updateJobSelect(jobs);
     await updateStats(jobs);
+    await loadInsights();
   } catch (error) {
     console.error("Error loading jobs:", error);
     allJobs = [];
     displayJobs([]);
     updateJobSelect([]);
     await updateStats([]);
+    await loadInsights();
   }
 }
 
@@ -103,7 +163,7 @@ function displayJobs(jobs) {
         <div class="card job-card">
           <div style="flex: 1;">
             <h3>${escapeHtml(job.title || "Untitled role")}</h3>
-            ${job.description ? `<p style="color: #64748b; margin: 8px 0;">${escapeHtml(job.description)}</p>` : ""}
+            ${job.description ? `<p style="margin: 8px 0;">${escapeHtml(job.description)}</p>` : ""}
             <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
               ${job.skills_required ? `<div><strong>Skills:</strong> ${escapeHtml(job.skills_required)}</div>` : ""}
               ${experience !== "" && experience !== null ? `<div><strong>Experience:</strong> ${escapeHtml(String(experience))} years</div>` : ""}
@@ -179,6 +239,44 @@ async function updateStats(jobs) {
   document.getElementById("stat-interviewed").innerText = String(interviewed);
 }
 
+async function loadInsights(jobId = null) {
+  const avgElement = document.getElementById("insight-average-score");
+  const skillElement = document.getElementById("insight-common-skill");
+  const topElement = document.getElementById("insight-top-candidate");
+  const metaElement = document.getElementById("insight-meta");
+
+  if (!avgElement || !skillElement || !topElement || !metaElement) {
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    if (jobId !== null && Number.isInteger(Number(jobId)) && Number(jobId) > 0) {
+      params.set("job_id", String(Number(jobId)));
+    }
+
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    const insights = await fetchJson(
+      `http://localhost/recruitment-platform/backend/applications/insights.php${suffix}`
+    );
+
+    const averageScore = Number.parseFloat(insights?.average_score);
+    const safeAverage = Number.isFinite(averageScore) ? `${Math.round(averageScore)}%` : "0%";
+    avgElement.textContent = safeAverage;
+    skillElement.textContent = normalizeInsightText(insights?.most_common_skill, "No skill data");
+    topElement.textContent = normalizeInsightText(insights?.top_candidate_name, "No candidate data");
+
+    const topScore = Number.parseFloat(insights?.top_candidate_score);
+    const topScoreText = Number.isFinite(topScore) ? `${Math.round(topScore)}%` : "N/A";
+    metaElement.textContent = `Top candidate score: ${topScoreText}`;
+  } catch (error) {
+    avgElement.textContent = "0%";
+    skillElement.textContent = "No skill data";
+    topElement.textContent = "No candidate data";
+    metaElement.textContent = "Top candidate score: N/A";
+  }
+}
+
 async function loadApplicants() {
   const select = document.getElementById("job-select");
   const jobId = select.value;
@@ -187,14 +285,24 @@ async function loadApplicants() {
   const div = document.getElementById("applicants");
 
   if (!jobId) {
+    await loadInsights();
     div.innerHTML = "<p class='empty-state'>Please select a job.</p>";
     return;
   }
 
   try {
+    const params = new URLSearchParams({
+      job_id: String(Number(jobId))
+    });
+    const rankingDescription = getRankingDescriptionInput();
+    if (rankingDescription) {
+      params.set("job_description", rankingDescription);
+    }
+
     const data = await fetchJson(
-      `http://localhost/recruitment-platform/backend/applications/list.php?job_id=${Number(jobId)}`
+      `http://localhost/recruitment-platform/backend/applications/list.php?${params.toString()}`
     );
+    await loadInsights(Number.parseInt(jobId, 10));
 
     if (!Array.isArray(data) || data.length === 0) {
       div.innerHTML = "<p class='empty-state'>No applicants yet for this job.</p>";
@@ -217,12 +325,32 @@ async function loadApplicants() {
           : "";
         const meetLink = sanitizeUrl(app.interview_meet_link);
         const calendarLink = sanitizeUrl(app.interview_calendar_link);
+        const score = toScoreNumber(app.score);
+        const rankNumber = Number.parseInt(app.rank, 10);
+        const isTop3 = Number(app.is_top_3) === 1 || (Number.isInteger(rankNumber) && rankNumber > 0 && rankNumber <= 3);
+        const matchedKeywords = String(app.matched_keywords || "").trim();
+        const matchFeedback = String(app.match_feedback || feedbackFromScore(score));
+        const rankLabel = Number.isInteger(rankNumber) && rankNumber > 0 ? `Rank ${rankNumber}` : "Unranked";
+        const topLabel = isTop3 && Number.isInteger(rankNumber) && rankNumber > 0 ? `Top ${rankNumber}` : "";
+        const cardClass = isTop3 ? "card top-candidate" : "card";
+        const rankBadgeClass = getRankBadgeClass(rankNumber);
 
         return `
-          <div class="card">
+          <div class="${cardClass}">
+            <div class="candidate-rank-row">
+              <span class="rank-badge ${rankBadgeClass}">${escapeHtml(rankLabel)}</span>
+              ${topLabel ? `<span class="top-candidate-chip">${escapeHtml(topLabel)}</span>` : ""}
+            </div>
             <h3>${escapeHtml(app.name || "Unnamed candidate")}</h3>
             <p>${escapeHtml(app.email || "No email")}</p>
-            <p>Score: ${app.score ?? "N/A"}</p>
+            <p><strong>Match Score:</strong> <span class="score-pill">${score}%</span></p>
+            <p>
+              <strong>Feedback:</strong>
+              <span class="feedback-pill ${feedbackClass(matchFeedback)}">${escapeHtml(matchFeedback)}</span>
+            </p>
+            ${matchedKeywords ? `<p><strong>Matched Keywords:</strong> ${escapeHtml(matchedKeywords)}</p>` : ""}
+            ${app.ai_feedback ? `<p><strong>AI Feedback:</strong> ${escapeHtml(app.ai_feedback)}</p>` : ""}
+            ${Number(app.ai_used) === 1 && app.ai_model ? `<p><small>AI Model: ${escapeHtml(app.ai_model)}</small></p>` : ""}
             <p>Status: <span class="status ${statusClass}">${escapeHtml(statusRaw.toUpperCase())}</span></p>
             ${hasInterviewData ? `
               <p><strong>Interview:</strong> ${interviewTimeLabel}</p>
@@ -252,6 +380,18 @@ async function loadApplicants() {
     console.error("Error loading applicants:", error);
     div.innerHTML = "<p class='empty-state'>Error loading applicants.</p>";
   }
+}
+
+async function runCandidateRanking() {
+  const select = document.getElementById("job-select");
+  const jobId = select?.value || "";
+
+  if (!jobId) {
+    alert("Please select a job before recalculating ranking.");
+    return;
+  }
+
+  await loadApplicants();
 }
 
 function showJobForm(jobId = null) {

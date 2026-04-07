@@ -7,10 +7,39 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
-<body>
+<body class="candidate-page">
   <header>
-    <strong>👤 Candidate Portal</strong>
-    <button onclick="logout()">Logout</button>
+    <strong>&#128100; Candidate Portal</strong>
+    <div class="header-actions">
+      <button
+        id="theme-toggle-candidate"
+        type="button"
+        class="theme-toggle"
+        aria-label="Toggle dark mode"
+        aria-pressed="false"
+      >
+        🌙
+      </button>
+      <button
+        id="notification-toggle"
+        type="button"
+        class="notification-toggle"
+        aria-label="Toggle notifications"
+        aria-controls="notification-widget"
+        aria-expanded="false"
+      >
+        &#128276;
+      </button>
+      <button onclick="logout()">Logout</button>
+
+      <aside id="notification-widget" class="notification-widget" aria-live="polite">
+        <div class="notification-widget-header">
+          <span class="notification-icon" aria-hidden="true">&#128276;</span>
+          <h2>Notifications</h2>
+        </div>
+        <div id="notifications"></div>
+      </aside>
+    </div>
   </header>
 
   <div class="candidate-hero">
@@ -24,15 +53,11 @@
   </div>
 
   <div class="container">
-    <h1>Notifications</h1>
-    <div id="notifications"></div>
-  </div>
-
-  <div class="container">
     <h1>My Applications</h1>
     <div id="applications"></div>
   </div>
 
+<script src="theme.js"></script>
 <script src="auth.js"></script>
 <script src="candidate.js"></script>
 </body>
