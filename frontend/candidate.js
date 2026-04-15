@@ -8,9 +8,48 @@ function getStoredUser() {
   }
 }
 
+function getServerSessionUser() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const serverUser = window.SERVER_SESSION_USER;
+  if (!serverUser || typeof serverUser !== "object") {
+    return null;
+  }
+
+  return serverUser;
+}
+
+function isValidCandidateUser(candidateUser) {
+  if (!candidateUser || typeof candidateUser !== "object") {
+    return false;
+  }
+
+  const candidateId = Number.parseInt(candidateUser.id, 10);
+  const role = String(candidateUser.role || "").toLowerCase();
+
+  return Number.isInteger(candidateId) && candidateId > 0 && role === "candidate";
+}
+
+function resolveCandidateUser() {
+  const storedUser = getStoredUser();
+  if (isValidCandidateUser(storedUser)) {
+    return storedUser;
+  }
+
+  const sessionUser = getServerSessionUser();
+  if (isValidCandidateUser(sessionUser)) {
+    localStorage.setItem("user", JSON.stringify(sessionUser));
+    return sessionUser;
+  }
+
+  return null;
+}
+
 // ---------- AUTH ----------
-const user = getStoredUser();
-if (!user || user.role !== "candidate") {
+const user = resolveCandidateUser();
+if (!isValidCandidateUser(user)) {
   window.location.href = "/recruitment-platform/frontend/login.html";
 }
 

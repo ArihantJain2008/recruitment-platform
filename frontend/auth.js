@@ -46,6 +46,7 @@ function login() {
 
   fetch("http://localhost/recruitment-platform/backend/auth/login.php", {
     method: "POST",
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password })
   })
@@ -75,7 +76,7 @@ function login() {
         if (data.role === "recruiter") {
           window.location.href = "/recruitment-platform/frontend/recruiter.html";
         } else if (data.role === "candidate") {
-          window.location.href = "/recruitment-platform/frontend/candidate.html";
+          window.location.href = "/recruitment-platform/frontend/candidate.php";
         }
       }
     })
@@ -86,6 +87,13 @@ function login() {
 }
 
 function logout() {
-  localStorage.removeItem("user");
-  window.location.href = "/recruitment-platform/frontend/login.html";
+  fetch("http://localhost/recruitment-platform/backend/auth/logout.php", {
+    method: "POST",
+    credentials: "same-origin"
+  })
+    .catch(() => {})
+    .finally(() => {
+      localStorage.removeItem("user");
+      window.location.href = "/recruitment-platform/frontend/login.html";
+    });
 }

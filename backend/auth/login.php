@@ -2,6 +2,10 @@
 // Start output buffering to catch any errors
 ob_start();
 
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 // Set headers first
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
@@ -88,6 +92,12 @@ try {
         echo json_encode(["error" => "Invalid credentials"]);
         exit;
     }
+
+    session_regenerate_id(true);
+    $_SESSION["user_id"] = intval($id);
+    $_SESSION["user_name"] = (string)$name;
+    $_SESSION["user_email"] = (string)$email_db;
+    $_SESSION["user_role"] = (string)$role;
 
     ob_clean();
     echo json_encode([
